@@ -2,10 +2,7 @@ import xml.etree.ElementTree as ET
 from shapely.geometry import Point, MultiPolygon
 from shapely.ops import unary_union
 import re
-import time
 import os
-import numpy as np
-import matplotlib.pyplot as plt
 
 def add_path_to_svg(svg_file, output_file, path_data, path_attributes=None):
     tree = ET.parse(svg_file)
@@ -107,7 +104,6 @@ def final_graph(pliksvg, clearsvg, point_framing=True):
         radius = extract_circle_radius_from_svg(pliksvg)
     
     circles1 = plot_to_paths(pliksvg)
-    print(len(circles1))
     for style, circle in circles1.items():
         circles2 = path_to_circle(circle, radius)
         if circles2:
@@ -118,59 +114,16 @@ def final_graph(pliksvg, clearsvg, point_framing=True):
         svg_path_data = shapely_to_svg_path(new_union)
         add_path_to_svg(clearsvg, pliksvg[:-4] + "_compressed.svg", svg_path_data, path_attributes={"style": style})
 
-def extract_num_points(filename):
-    """Extracts and prints the number of points from a filename in the format 'noisy_sin_{number of points}.svg'."""
-    match = re.search(r'noisy_gauss(\d+)\.svg', filename)
-    if match:
-        num_points = int(match.group(1))
-        return num_points
-
-def extract_num_directory(directory):
-    """Extracts and prints the number of points from a directory in the format 'noisy_sin_{number of points}'."""
-    match = re.search(r'noisy_gaussian_(\d+)', directory)
-    if match:
-        num_dir = int(match.group(1))
-        return num_dir
-
 if __name__ == "__main__":
-    # Ask about input files
-    directories = [d for d in os.listdir() if d.startswith("noisy_gaussian")]
-    print("Directories found:", directories)
-    
-    n = np.array([])
-    times = np.array([])
-    
-    for directory in directories:
-        files = [f for f in os.listdir(directory) if f.startswith("noisy") and not f.endswith("compressed.svg")]
-        clearsvg = [f for f in os.listdir(directory) if f.startswith("clear")][0]
-        print(f"\nDirectory: {directory}")
-        print(f"\nFiles: {files}")
-        #Example: Process each file
-        for file in files:
-            print(f"\nProcessing: {file}")
-            n = np.append(n, extract_num_points(file))
-            pliksvg = directory + "/" + file
-            start_time = time.time()
-            final_graph(pliksvg, clearsvg)
-            execution_time = time.time() - start_time
-            times = np.append(times, execution_time)
-            print(f"Execution time: {execution_time} seconds")
-        print(f"\nsizes: {n}")
-        print(f"\ntimes: {times}")
-
-        np.savetxt("time_complexity_data_" + str(extract_num_directory(directory)) + ".txt", np.column_stack((n, times)), fmt=["%d", "%e"], delimiter=",", header="n, time")
-        print(f"\nSaved data to file time_complexity_data_{extract_num_directory(directory)}.txt")
-
-        # plt.scatter(n, times, label='Data measured using our program', color='b', alpha=1, s=10)
-        # plt.xlabel('Number of points')
-        # plt.ylabel('Execution time (s)')
-        # plt.title('Execution time vs. Number of points')
-        # plt.savefig('time_complexity_vs_points.pdf', format='pdf')
-        # plt.close()
-
-        # plt.loglog(n, times, label='Data measured using our program', color='b', alpha=1, marker='o', linestyle='None')
-        # plt.xlabel('Number of points')
-        # plt.ylabel('Execution time (s)')
-        # plt.title('Execution time vs. Number of points (log-log)')
-        # plt.savefig('time_complexity_vs_points_loglog.pdf', format='pdf')
-        # plt.close()
+    # Ask about input direvtory
+    print("What is the name of the directory?")
+    directory = input("")
+    files = [d for d in os.listdir(directory)]
+    # pliksvg = input("")
+    print("What is the path to the clear svg plot?")
+    clearsvg = input("")
+    print("Do the plots have a point framing? (True/False) - matplotlib default: False")
+    point_framing = bool(input(""))
+    for file in files:
+        pliksvg = directory + "/" + file
+        final_graph(pliksvg, clearsvg, point_framing)
